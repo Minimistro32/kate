@@ -126,7 +126,12 @@ function _draw()
 	--houses
 	for i, palette in pairs(houses) do
 		house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
-		draw_house(house_x,21,0.001953125*house_x+0.375,palette)
+		house_angle=0.0009765625*house_x+0.4375
+		path_off=sin(house_angle)*18
+		draw_house(house_x,21,house_angle,palette)
+		polyfill({house_x+2,27,house_x+5,27,house_x+10-path_off,55,house_x-3-path_off,55},9)
+		-- line(house_x+3,27,house_x+3,55,9)
+		-- line(house_x+3,27,house_x+3,55,9)
 	end
 	
 	--kate
