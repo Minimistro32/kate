@@ -3,7 +3,7 @@ version 41
 __lua__
 -- INIT
 function _init()
-	poke(0x5f2e,0) --persist pal swap
+	poke(0x5f2e,1) --persist pal swap
 	pal({1,2,3,4,5,6,7,10,134,133,132,128,13,11,15,16}, 1)
 
 	pal_swap_screen_segment()
@@ -125,15 +125,10 @@ function _draw()
 	
 	--houses
 	for i, palette in pairs(houses) do
-		for color_key in pairs(palette) do
-			pal(house_palettes[1][color_key], palette[color_key])
-		end
-		
-		spr(136,0 + i*32 + flr(i/4)*32 - (x_scroll % 128),0,4,4)
-		
-		for color_key in pairs(palette) do
-			pal(house_palettes[1][color_key], house_palettes[1][color_key])
-		end
+		house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
+		draw_house(house_x,21,0.001953125*house_x+0.375,palette)
+		-- print(house_x, 2, i*6, 1)
+		-- print(house_angle, 2+4*8, i*6, 1)
 	end
 	
 	
@@ -148,7 +143,69 @@ function draw_kate_face()
 	sspr(64,32,30,32,16,96,30*scale,32*scale)
 end
 
+function draw_house(x, y, angle, palette)
+	--data
+    d=10
+    w=18
+    h=-10
+    theta_y=30
+    theta_x=angle
+    pitch=30 --of roof
+    overhang=2
 
+	--draw
+	x_off = sin(theta_x)*d
+    y_off = sin(theta_y/360)*d
+    hang_off = tan(pitch/360)*(overhang)
+	roof_off = sin(pitch/360)*(w/2) --peak
+	--side
+	for i = h,0 do
+		line(x+((w/2)*sgn(x_off))+x_off,y+(-h/2)+y_off+i,x+((w/2)*sgn(x_off)),y+(-h/2)+i,palette["side"])
+	end
+	--front
+	rectfill(x-(w/2),y+(h/2),x+(w/2),y-(h/2),palette["front"]) --todo: remove this rectfill change polyfill below to pentagon
+	polyfill({x-(w/2),y+(h/2),x,y+(h/2)+roof_off,x+(w/2),y+(h/2),x,y+(h/2)},palette["front"])
+	--roof
+	polyfill({x-(w/2)-overhang,y+(h/2)-hang_off,x+x_off-(w/2)-overhang,y+y_off+(h/2)-hang_off,x+x_off,y+y_off+(h/2)+roof_off,x,y+(h/2)+roof_off},12)
+	polyfill({x+x_off,y+y_off+(h/2)+roof_off,x,y+(h/2)+roof_off,x+(w/2)+overhang,y+(h/2)-hang_off,x+x_off+(w/2)+overhang,y+y_off+(h/2)-hang_off},12)
+	--window
+	rectfill(x-6,y+1,x-1,y-2,12)
+	rectfill(x-5,y,x-2,y-1,6)
+	--door
+	rectfill(x+2,y,x+5,y+5,12)
+	--knob
+	pset(x+4,y+3,8)
+end
+
+-->8
+--HELPERS
+function tan(x) return sin(x) / cos(x) end
+
+function polyfill(coords, col)
+	--build_obj
+    points={}
+    for i=1,8,2  do
+        add(points,{x=coords[i],y=coords[i+1]})
+    end
+
+    local xl,xr,ymin,ymax={},{},129,0xffff
+    for k,v in pairs(points) do
+        local p2=points[k%#points+1]
+        local x1,y1,x2,y2=v.x,flr(v.y),p2.x,flr(p2.y)
+        if y1>y2 then
+            y1,y2,x1,x2=y2,y1,x2,x1
+        end
+        local d=y2-y1
+        for y=y1,y2 do
+            local xval=flr(x1+(x2-x1)*(d==0 and 1 or (y-y1)/d))
+            xl[y],xr[y]=min(xl[y] or 32767,xval),max(xr[y] or 0x8001,xval)
+        end
+        ymin,ymax=min(y1,ymin),max(y2,ymax)
+    end
+    for y=ymin,ymax do
+        rectfill(xl[y],y,xr[y],y,col)
+    end
+end
 
 -->8
 --JUNK
