@@ -127,8 +127,6 @@ function _draw()
 	for i, palette in pairs(houses) do
 		house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
 		draw_house(house_x,21,0.001953125*house_x+0.375,palette)
-		-- print(house_x, 2, i*6, 1)
-		-- print(house_angle, 2+4*8, i*6, 1)
 	end
 	
 	
