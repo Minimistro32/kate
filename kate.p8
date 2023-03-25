@@ -4,7 +4,7 @@ __lua__
 -- INIT
 function _init()
 	poke(0x5f2e,1) --persist pal swap
-	pal({1,2,3,4,5,6,7,10,134,133,132,128,13,11,15,16}, 1)
+	pal({1,2,3,4,5,6,7,10,134,133,132,128,12,11,15,16}, 1)
 
 	pal_swap_screen_segment()
 	
@@ -16,7 +16,38 @@ function _init()
 	y_pos = 56
 	facing_cam = true
 
-	house_palettes = { --can't use 14, 12, 6, or 8
+	--PALETTES
+	--comp
+	comp_palettes = {
+		hair={
+			-- 9, --grayish
+			4, --reddish
+			12, --brown
+			8, --yellow
+			11, --light brown
+			0,  --black
+		},
+		dress={
+			2, --purple
+			3, --green
+			4, --reddish
+			5, --gray
+			7, --white
+			8, --yellow
+			10, --sludge
+			11, --light brown
+			13, --pink
+		}
+	}
+	comp_hair = rnd(comp_palettes['hair'])
+	comp_dress = rnd(comp_palettes['dress'])
+	if comp_hair == comp_dress then
+		del(comp_palettes['dress'], comp_hair)
+		comp_dress = rnd(comp_palettes['dress'])
+	end
+
+	--house
+	house_palettes = {
 		{	--tan
 			front = 15,
 			side = 9
@@ -31,7 +62,7 @@ function _init()
 		},
 		{	--blue
 			front = 1,
-			side = 13
+			side = 12 --was std color 13, swapped 13 into light-blue
 		}
 	}
 	
@@ -136,6 +167,12 @@ function _draw()
 	
 	--kate
 	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * (flr(timer / 5) % 4), 0, 8, 16, x_pos, y_pos, 8 * kate_scale, 16 * kate_scale)
+	--comp
+	pal(12,comp_hair)
+	pal(1,comp_dress)
+	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * abs((flr(timer / 5) % 4)-3), 0, 8, 16, x_pos + 5 * kate_scale, y_pos, 8 * kate_scale, 16 * kate_scale)
+	pal(12,12)
+	pal(1,1)
 	
 	palt()
 end
