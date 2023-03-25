@@ -129,10 +129,9 @@ function _draw()
 		draw_house(house_x,21,0.001953125*house_x+0.375,palette)
 	end
 	
-	
+	--kate
 	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * (flr(timer / 5) % 4), 0, 8, 16, x_pos, y_pos, 8 * kate_scale, 16 * kate_scale)
 	
-
 	palt()
 end
 
@@ -205,6 +204,14 @@ function polyfill(coords, col)
     end
 end
 
+function pal_swap_screen_segment()
+	--use separate palette
+	poke(0x5f5f,0x10)
+	pal({1,2,143,4,5,6,7,142,134,133,132,128,13,14,15,16}, 2)
+	--on bottom section
+	memset(0x5f7b,0xff,7)
+end
+
 -->8
 --JUNK
 function draw_pal()
@@ -219,14 +226,6 @@ function draw_junk()
 	palt(6, true)
 	spr(4,64,64,2,2)
 	palt()
-end
-
-function pal_swap_screen_segment()
-	--use separate palette
-	poke(0x5f5f,0x10)
-	pal({1,2,143,4,5,6,7,142,134,133,132,128,13,14,15,16}, 2)
-	--on bottom section
-	memset(0x5f7b,0xff,7)
 end
 
 __gfx__
