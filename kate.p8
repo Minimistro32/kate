@@ -13,7 +13,7 @@ function _init()
 	pal({1,2,3,4,5,6,7,10,134,133,132,128,12,11,15,16}, 1)
 
 	pal_swap_screen_segment()
-	
+
 	timer = 0
 	x_scroll = 16
 	can_scroll_back = false
@@ -26,7 +26,6 @@ function _init()
 	--comp
 	comp_palettes = {
 		hair={
-			-- 9, --grayish
 			4, --reddish
 			12, --brown
 			8, --yellow
@@ -71,7 +70,7 @@ function _init()
 			side = 12 --was std color 13, swapped 13 into light-blue
 		}
 	}
-	
+
 	houses = {}
 	add_houses(6)
 	should_cycle_once = true
@@ -103,7 +102,7 @@ end
 function _update()
 	--player data
 	kate_scale = min(max(((y_pos-4)/32)^2, 0.4), 2) --literal magic
-	
+
 	--input
 	if should_point then
 		upd_point()
@@ -149,7 +148,7 @@ function _update()
 	else
 		should_cycle_once = true
 	end
-	
+
 	timer += 1
 end
 
@@ -170,7 +169,7 @@ function draw_ui()
 	--print("x",justify(4,0,1.0),120,2)
 	
 	--controls
-	slide=0
+	slide=1
 	ovalfill(justify(1,9,slide),124,justify(1,3,slide),127,5)
 	print('★',justify(7,3,slide),122+tonum(pressed),5)
 	print('❎',justify(7,3,slide),122+tonum(pressed),7)
@@ -181,9 +180,6 @@ function draw_ui()
 	ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
 	sspr(64,32,30,32,justify(30,5,slide),93,30,32)
 	oval(justify(1,3,slide),91,justify(1,36,slide),126,7)
-	-- ovalfill(3,91,36,126,1)
-	-- sspr(64,32,30,32,5,93,30,32)
-	-- oval(3,91,36,126,7)
 
 	--bevel
 	pset(1,89,0)
@@ -239,18 +235,18 @@ end
 
 function draw_house(x, y, angle, palette)
 	--data
-    d=10
-    w=18
-    h=-10
-    theta_y=30
-    theta_x=angle
-    pitch=30 --of roof
-    overhang=2
+	d=10
+	w=18
+	h=-10
+	theta_y=30
+	theta_x=angle
+	pitch=30 --of roof
+	overhang=2
 
 	--draw
 	x_off = sin(theta_x)*d
-    y_off = sin(theta_y/360)*d
-    hang_off = tan(pitch/360)*(overhang)
+	y_off = sin(theta_y/360)*d
+	hang_off = tan(pitch/360)*(overhang)
 	roof_off = sin(pitch/360)*(w/2) --peak
 	--side
 	for i = h,0 do
@@ -279,28 +275,28 @@ function justify(width,offset,percent) return ((128-width-(2*offset))/128)*(perc
 
 function polyfill(coords, col)
 	--build_obj
-    points={}
-    for i=1,8,2  do
-        add(points,{x=coords[i],y=coords[i+1]})
-    end
+	points={}
+	for i=1,8,2  do
+		add(points,{x=coords[i],y=coords[i+1]})
+	end
 
-    local xl,xr,ymin,ymax={},{},129,0xffff
-    for k,v in pairs(points) do
-        local p2=points[k%#points+1]
-        local x1,y1,x2,y2=v.x,flr(v.y),p2.x,flr(p2.y)
-        if y1>y2 then
-            y1,y2,x1,x2=y2,y1,x2,x1
-        end
-        local d=y2-y1
-        for y=y1,y2 do
-            local xval=flr(x1+(x2-x1)*(d==0 and 1 or (y-y1)/d))
-            xl[y],xr[y]=min(xl[y] or 32767,xval),max(xr[y] or 0x8001,xval)
-        end
-        ymin,ymax=min(y1,ymin),max(y2,ymax)
-    end
-    for y=ymin,ymax do
-        rectfill(xl[y],y,xr[y],y,col)
-    end
+	local xl,xr,ymin,ymax={},{},129,0xffff
+	for k,v in pairs(points) do
+		local p2=points[k%#points+1]
+		local x1,y1,x2,y2=v.x,flr(v.y),p2.x,flr(p2.y)
+		if y1>y2 then
+			y1,y2,x1,x2=y2,y1,x2,x1
+		end
+		local d=y2-y1
+		for y=y1,y2 do
+			local xval=flr(x1+(x2-x1)*(d==0 and 1 or (y-y1)/d))
+			xl[y],xr[y]=min(xl[y] or 32767,xval),max(xr[y] or 0x8001,xval)
+		end
+		ymin,ymax=min(y1,ymin),max(y2,ymax)
+	end
+	for y=ymin,ymax do
+		rectfill(xl[y],y,xr[y],y,col)
+	end
 end
 
 function pal_swap_screen_segment()
