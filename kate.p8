@@ -77,6 +77,20 @@ function _init()
 
 	--music
 	-- music(0,0,9)
+
+	--text
+	text_box={
+		x1=40,
+		y1=92,
+		x2=122,
+		y2=120,
+		sfx=0,
+		text=nil,
+		buffer="The quick brown fox jumped over the lazy dog. It was remarkable, I'm so glad I was able to see it.",--\rMOAR",
+		start=nil,
+		flushed=false,
+		paginated=false
+	}
 end
 
 function add_houses(n)
@@ -136,6 +150,10 @@ function _update()
 			facing_cam = true
 		end
 	end
+	if btn(5) then
+		pressed = true
+		upd_text_box(text_box)
+	end
 	pressed = btn(5) --x; z is 4
 
 	--cycles houses
@@ -150,6 +168,12 @@ function _update()
 	end
 
 	timer += 1
+end
+
+function upd_text_box(tb)
+	if tb.start != nil and tb.flushed then
+		tb.start = nil
+	end
 end
 
 -->8
@@ -193,6 +217,7 @@ function _draw()
 	palt(0, false)
 	palt(14, true)
 	draw_ui()
+	draw_text_box(text_box, 100)
 	
 	-- print(x_pos, y_pos)
 	-- print(x_scroll % 128)
@@ -224,7 +249,7 @@ function _draw()
 
 	palt()
 	if should_point then
-		drw_point(2, 14)
+		draw_point(2, 14)
 	end
 end
 
@@ -269,6 +294,84 @@ end
 
 -->8
 --HELPERS
+function draw_text_box(tb, speed)
+	if tb.start == nil then
+		tb.start = time()
+		tb.flushed = false
+		tb.text = nil
+		tb.paginated = false
+	end
+	if tb.text == nil then
+		local screens = split(tb.buffer,'\r')
+		tb.text = screens[1]
+		tb.buffer=sub(tb.buffer,#tb.text+2) --one to move to next screen, two for \r
+	end
+	
+	--add linebreaks
+	local text = split(tb.text,"")
+	local x=tb.x1
+	local y=tb.y1
+	local last_space=nil
+	
+	for i=1,#text do
+		if text[i]==" " then
+			last_space=i
+		end
+		
+		if x >= tb.x2 then
+			if last_space == nil then
+				add(text,'\n',i)
+			else
+				text[last_space]='\n'
+			end
+			x=tb.x1+((i-last_space)*4)
+			y+=6
+			
+			if y >= tb.y2 then
+				--? add ... and boot three chars to buffer
+				tb.buffer=sub(tb.text,-(#text-last_space))..(tb.buffer!="" and '\r'..tb.buffer or "")
+				tb.text=sub(tb.text,1,-(#text-last_space+1))
+				tb.paginated=true
+				break
+			end
+
+			last_space=nil
+		else
+			x+=4
+		end
+		
+	end
+			
+	-- print
+	y=tb.y1
+	x=tb.x1
+	for i, letter in pairs(text) do
+		if i >= (time() - tb.start) * speed then
+			return
+		end
+		if letter=='\n'then
+			y+=6
+			x=tb.x1
+		else
+			print(letter,x,y,7)
+			x+=4
+		end
+	end
+	if tb.paginated then
+		print('...',tb.x1,y+6)
+	end
+
+	--clear the text
+	tb.flushed=true
+end
+
+function join(t,delim)
+	str = ''
+	for v in all(t) do
+		str=str..v..delim
+	end
+end
+
 function tan(x) return sin(x) / cos(x) end
 
 function justify(width,offset,percent) return ((128-width-(2*offset))/128)*(percent*128)+offset end
@@ -322,7 +425,7 @@ function upd_point()
 	end
 end
 
-function drw_point(cursor_col, point_col)
+function draw_point(cursor_col, point_col)
 	prev = color(cursor_col)
 	line(point_x-2,point_y,point_x+2,point_y)
 	line(point_x,point_y+2,point_x,point_y-2)
