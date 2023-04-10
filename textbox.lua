@@ -99,9 +99,7 @@ end
 
 function _drw_ui(tb, speed)
     slide=1
-    print('\^:0000003e7f7f7f3e',justify(7,3,slide),120,5)
-    print('❎',justify(7,3,slide),122+tonum(x_pressed),7)
-    
+    drw_btn('❎',justify(7,3,slide),122,x_pressed)
     
     slide=abs(slide-1)
     justify_text_box(slide)

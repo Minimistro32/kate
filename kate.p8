@@ -166,9 +166,9 @@ end
 
 -->8
 --DRAW
-function draw_ui()
-	color(7)
+function drw_ui()
 	--border
+	color(7)
 	line(1,128,1,89)
 	pset(2,90,7)
 	line(126,89)
@@ -176,29 +176,21 @@ function draw_ui()
 	line(126,128)
 
 	--color debug
-	-- draw_pal(4,{56,100})
+	drw_pal(4,{56,100})
 
 	--text debug
 	-- print(tb.t_start,0,0,7)
 	-- print(tb.box_text,0,0,7)
 	-- print(tb.buffer,0,6,7)
+
+	--print pos
+	-- print(x_pos, 64, 100, 7)
+	-- print(y_pos, 64, 106, 7)
 	
-	--controls
 	if tb.is_active then
-		slide=1
-		print('\^:0000003e7f7f7f3e',justify(7,3,slide),120,5)
-		print('❎',justify(7,3,slide),122+tonum(x_pressed),7)
-
-		
-		slide=abs(slide-1)
-		justify_text_box(slide)
-		
-		--face
-		ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
-		sspr(64,32,30,32,justify(30,5,slide),93,30,32)
-		oval(justify(1,3,slide),91,justify(1,36,slide),126,7)
+		drw_text_box(tb, 50)
 	end
-
+	
 	--bevel
 	pset(1,89,0)
 	pset(126,89,0)
@@ -210,25 +202,28 @@ function _draw()
 	rectfill(0,56,128,128,0)
 	palt(0, false)
 	palt(14, true)
-	draw_ui()
-	if tb.is_active then
-		drw_text_box(tb, 50)
-	end
+	
+	drw_ui()
 	
 	--sidewalk
 	for i=0,4 do
-		spr(128,0 + i*32 - ((x_scroll*2) % 32),56,4,4)
+		spr(128,i*32 - ((x_scroll*2) % 32),56,4,4)
 	end
 	
 	--houses
 	for i, palette in pairs(houses) do
 		house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
 		house_angle=0.0009765625*house_x+0.4375
+		drw_house(house_x,21,house_angle,palette)
+ 		--path
 		path_off=sin(house_angle)*18
-		draw_house(house_x,21,house_angle,palette)
 		polyfill({house_x+2,27,house_x+5,27,house_x+10-path_off,55,house_x-3-path_off,55},9)
-		-- line(house_x+3,27,house_x+3,55,9)
-		-- line(house_x+3,27,house_x+3,55,9)
+		
+		local col = 7
+		if x_pos>=house_x+1 and x_pos<=house_x+3 and y_pos>=22 and y_pos<=24 then
+			col=3
+		end
+		rectfill(house_x+2,27,house_x+5,28,col)
 	end
 	
 	--kate
@@ -247,7 +242,12 @@ function _draw()
 	end
 end
 
-function draw_house(x, y, angle, palette)
+function drw_btn(icon,x,y,pressed)
+    print('\^:0000003e7f7f7f3e',x,y-2,5)
+    print(icon,x,y+tonum(pressed),7)
+end
+
+function drw_house(x, y, angle, palette)
 	--data
 	d=10
 	w=18
@@ -267,8 +267,7 @@ function draw_house(x, y, angle, palette)
 		line(x+((w/2)*sgn(x_off))+x_off,y+(-h/2)+y_off+i,x+((w/2)*sgn(x_off)),y+(-h/2)+i,palette["side"])
 	end
 	--front
-	rectfill(x-(w/2),y+(h/2),x+(w/2),y-(h/2),palette["front"]) --todo: remove this rectfill change polyfill below to pentagon
-	polyfill({x-(w/2),y+(h/2),x,y+(h/2)+roof_off,x+(w/2),y+(h/2),x,y+(h/2)},palette["front"])
+	polyfill({x-(w/2),y+(h/2),x,y+(h/2)+roof_off,x+(w/2),y+(h/2),x+(w/2),y-(h/2),x-(w/2),y-(h/2)},palette["front"])
 	--roof
 	polyfill({x-(w/2)-overhang,y+(h/2)-hang_off,x+x_off-(w/2)-overhang,y+y_off+(h/2)-hang_off,x+x_off,y+y_off+(h/2)+roof_off,x,y+(h/2)+roof_off},12)
 	polyfill({x+x_off,y+y_off+(h/2)+roof_off,x,y+(h/2)+roof_off,x+(w/2)+overhang,y+(h/2)-hang_off,x+x_off+(w/2)+overhang,y+y_off+(h/2)-hang_off},12)
@@ -291,7 +290,7 @@ function justify(width,offset,percent) return ((128-width-(2*offset))/128)*(perc
 function polyfill(coords, col)
 	--build_obj
 	points={}
-	for i=1,8,2  do
+	for i=1,#coords,2  do
 		add(points,{x=coords[i],y=coords[i+1]})
 	end
 
@@ -325,7 +324,7 @@ end
 
 -->8
 --JUNK
-function draw_pal(size, pos)
+function drw_pal(size, pos)
 	for i=0,3 do
 		for j=0,3 do	
 			rectfill(pos[1]+i*size,pos[2]+j*size,pos[1]+i*size+(size-1),pos[2]+j*size+(size-1),i*4+j)
@@ -333,7 +332,7 @@ function draw_pal(size, pos)
 	end
 end
 
-function draw_junk()
+function drw_junk()
 	palt(6, true)
 	spr(4,64,64,2,2)
 	palt()
