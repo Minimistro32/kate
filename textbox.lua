@@ -91,18 +91,15 @@ function drw_text_box(tb, speed)
     _drw_text(tb, speed)
 end
 
-function justify_text_box(percent)
-    local width=82
-    tb.x1 = justify(width,40,percent)
-    tb.x2 = tb.x1+width
-end
-
 function _drw_ui(tb, speed)
     slide=1
     drw_btn('❎',justify(7,3,slide),122,x_pressed)
     
     slide=abs(slide-1)
-    justify_text_box(slide)
+
+    local width=82
+    tb.x1 = justify(width,40,slide)
+    tb.x2 = tb.x1+width
     
     --face
     ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
