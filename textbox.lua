@@ -1,17 +1,3 @@
--- SAMPLE TEXTBOX
--- text_box={
---     x1=40,
---     y1=92,
---     x2=122,
---     y2=120,
---     sfx=0,
---     text=nil,
---     buffer="The quick brown fox jumped over the lazy dog. It was remarkable, I'm so glad I was able to see it.",--\rMOAR",
---     start=nil,
---     flushed=false,
---     paginated=false
--- }
-
 function init_text_box()
 	return {
         --PUBLIC
@@ -26,37 +12,46 @@ function init_text_box()
 		y2=120,
         --state
         print_chars=nil, --preprocessed letters
-		box_text=nil,--words on screen
+		box_text="",--words on screen
 		buffer="",--\r for page breaks",
 		t_start=nil,
-		box_full=true, --filled up the screen
+		box_full=false, --filled up the screen
 		ellipsis=false
 	}
 end
 
+function justify_text_box(percent)
+    local width=82
+    tb.x1 = justify(width,40,percent)
+    tb.x2 = tb.x1+width
+end
+
 function queue_text_box(tb, text)
-    if tb.box_text == "" then
-        tb.box_text..=text
-    else
-        tb.buffer..=text
-    end
+    tb.buffer..=text
 end
 
 function cycle_text_box(tb)
     tb.is_active = true
 
-    if tb.box_full then --resets box animation when full
-        tb.t_start=time()
-        tb.box_text=nil
+    --resets box animation when full
+    if tb.box_full then
+        tb.t_start=nil
+        tb.box_text=""
         tb.ellipsis=false
         tb.box_full=false
     end
-    if tb.box_text == nil then
+    --flush buffer
+    if tb.box_text == "" then
         local screens = split(tb.buffer,'\r')
         tb.box_text = screens[1]
         tb.is_active = tb.box_text != ''
         tb.buffer=sub(tb.buffer,#tb.box_text+2) --one to move to next screen, two for \r
     end
+    --start timer if text continues
+    if tb.box_text != "" and tb.t_start==nil then
+        tb.t_start = time()
+    end
+        
     
     --add linebreaks
     tb.print_chars = split(tb.box_text,"")
@@ -98,9 +93,6 @@ end
 
 --DRAW
 function drw_text_box(tb, speed)
-    print(tb.print_chars[#tb.print_chars], 3,3)
-    print(tb.ellipsis, 3,20)
-
 	local y=tb.y1
 	local x=tb.x1
 	for i, letter in pairs(tb.print_chars) do
