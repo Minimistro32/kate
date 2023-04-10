@@ -144,7 +144,7 @@ function _update()
 			facing_cam = true
 		end
 		if btnp(4) then --z
-			queue_text_box(tb, "The quick brown fox jumped over the lazy dog. It was remarkable, I'm so glad I was able to see it.")
+			queue_text_box(tb, "i'm kinda hungry maybe we should go get a sandwich. actually on second thought, forget it, lets just get reese's.")
 			cycle_text_box(tb)
 		end
 	end
@@ -175,23 +175,29 @@ function draw_ui()
 	pset(125,90,7)
 	line(126,128)
 
-	--drawpalette
+	--color debug
 	-- draw_pal(4,{56,100})
 
-	--print("x",justify(4,0,1.0),120,2)
+	--text debug
+	-- print(tb.t_start,0,0,7)
+	-- print(tb.box_text,0,0,7)
+	-- print(tb.buffer,0,6,7)
 	
 	--controls
-	slide=1
-	ovalfill(justify(1,9,slide),124,justify(1,3,slide),127,5)
-	print('★',justify(7,3,slide),122+tonum(x_pressed),5)
-	print('❎',justify(7,3,slide),122+tonum(x_pressed),7)
+	if tb.is_active then
+		slide=1
+		print('\^:0000003e7f7f7f3e',justify(7,3,slide),120,5)
+		print('❎',justify(7,3,slide),122+tonum(x_pressed),7)
 
-	slide=abs(slide-1)
-
-	--face
-	ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
-	sspr(64,32,30,32,justify(30,5,slide),93,30,32)
-	oval(justify(1,3,slide),91,justify(1,36,slide),126,7)
+		
+		slide=abs(slide-1)
+		justify_text_box(slide)
+		
+		--face
+		ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
+		sspr(64,32,30,32,justify(30,5,slide),93,30,32)
+		oval(justify(1,3,slide),91,justify(1,36,slide),126,7)
+	end
 
 	--bevel
 	pset(1,89,0)
@@ -206,7 +212,7 @@ function _draw()
 	palt(14, true)
 	draw_ui()
 	if tb.is_active then
-		drw_text_box(tb, 100)
+		drw_text_box(tb, 50)
 	end
 	
 	--sidewalk
@@ -239,11 +245,6 @@ function _draw()
 	if should_point then
 		drw_point(2, 14)
 	end
-end
-
-function draw_kate_face()
-	scale = 1
-	sspr(64,32,30,32,16,96,30*scale,32*scale)
 end
 
 function draw_house(x, y, angle, palette)
