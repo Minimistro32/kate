@@ -22,6 +22,8 @@ function _init()
 	y_pos = 56
 	facing_cam = true
 
+	context=nil
+
 	--PALETTES
 	--comp
 	comp_palettes = {
@@ -107,6 +109,7 @@ function _update()
 	kate_scale = min(max(((y_pos-4)/32)^2, 0.4), 2) --literal magic
 
 	--input
+	z_pressed = btn(4)
 	x_pressed = btn(5)
 	if should_point then
 		upd_point()
@@ -160,6 +163,15 @@ function _update()
 		should_cycle_once = true
 	end
 
+	--update context
+	context = nil
+	for i=1,#houses do
+		local house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
+		if x_pos>=house_x+1 and x_pos<=house_x+3 and y_pos>=22 and y_pos<=24 then
+ 			context="HOUSE"
+		end
+	end
+
 	frame += 1
 end
 
@@ -176,10 +188,10 @@ function drw_ui()
 	line(126,128)
 
 	--color debug
-	drw_pal(4,{56,100})
+	-- drw_pal(4,{56,100})
 
 	--text debug
-	-- print(tb.t_start,0,0,7)
+	print(context,0,0,7)
 	-- print(tb.box_text,0,0,7)
 	-- print(tb.buffer,0,6,7)
 
@@ -189,6 +201,11 @@ function drw_ui()
 	
 	if tb.is_active then
 		drw_text_box(tb, 50)
+	elseif context=="HOUSE" then
+		local label = "knock the door"
+		local x = justify(#label*4+10,3,0.5)
+		print(label,x+10,108,7)
+		drw_btn('🅾️',x,108,z_pressed)
 	end
 	
 	--bevel
@@ -212,18 +229,12 @@ function _draw()
 	
 	--houses
 	for i, palette in pairs(houses) do
-		house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
-		house_angle=0.0009765625*house_x+0.4375
+		local house_x = 19 + i*32 + flr(i/4)*32 - (x_scroll % 128)
+		local house_angle=0.0009765625*house_x+0.4375
 		drw_house(house_x,21,house_angle,palette)
  		--path
-		path_off=sin(house_angle)*18
+		local path_off=sin(house_angle)*18
 		polyfill({house_x+2,27,house_x+5,27,house_x+10-path_off,55,house_x-3-path_off,55},9)
-		
-		local col = 7
-		if x_pos>=house_x+1 and x_pos<=house_x+3 and y_pos>=22 and y_pos<=24 then
-			col=3
-		end
-		rectfill(house_x+2,27,house_x+5,28,col)
 	end
 	
 	--kate
@@ -285,7 +296,7 @@ end
 
 function tan(x) return sin(x) / cos(x) end
 
-function justify(width,offset,percent) return ((128-width-(2*offset))/128)*(percent*128)+offset end
+function justify(width,offset,percent) return percent*(128-width-(2*offset))+offset end
 
 function polyfill(coords, col)
 	--build_obj
