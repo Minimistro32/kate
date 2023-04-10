@@ -20,12 +20,6 @@ function init_text_box()
 	}
 end
 
-function justify_text_box(percent)
-    local width=82
-    tb.x1 = justify(width,40,percent)
-    tb.x2 = tb.x1+width
-end
-
 function queue_text_box(tb, text)
     tb.buffer..=text
 end
@@ -93,24 +87,45 @@ end
 
 --DRAW
 function drw_text_box(tb, speed)
-	local y=tb.y1
-	local x=tb.x1
-	for i, letter in pairs(tb.print_chars) do
-		if i >= (time() - tb.t_start) * speed then
-			return
-		end
-		if letter=='\n'then
-			y+=6
-			x=tb.x1
-		else
-			print(letter,x,y,7)
-			x+=4
-		end
-	end
-	if tb.ellipsis then
-		print('...',tb.x1,y+6)
-	end
+    _drw_ui(tb)
+    _drw_text(tb, speed)
+end
 
-	--clear the text
-	tb.box_full=true
+function _drw_ui(tb, speed)
+    slide=1
+    drw_btn('❎',justify(7,3,slide),122,x_pressed)
+    
+    slide=abs(slide-1)
+
+    local width=82
+    tb.x1 = justify(width,40,slide)
+    tb.x2 = tb.x1+width
+    
+    --face
+    ovalfill(justify(1,3,slide),91,justify(1,36,slide),126,1)
+    sspr(64,32,30,32,justify(30,5,slide),93,30,32)
+    oval(justify(1,3,slide),91,justify(1,36,slide),126,7)
+end
+
+function _drw_text(tb, speed)
+    local y=tb.y1
+    local x=tb.x1
+    for i, letter in pairs(tb.print_chars) do
+        if i >= (time() - tb.t_start) * speed then
+            return
+        end
+        if letter=='\n'then
+            y+=6
+            x=tb.x1
+        else
+            print(letter,x,y,7)
+            x+=4
+        end
+    end
+    if tb.ellipsis then
+        print('...',tb.x1,y+6)
+    end
+
+    --clear the text
+    tb.box_full=true
 end
