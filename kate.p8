@@ -2,11 +2,11 @@ pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
 -- INIT
+#include textbox.lua
+#include pointer.lua
+
 function _init()
-	--pointer
-	should_point = false
-	point_x = 64
-	point_y = 64
+	should_point = init_point(false)
 
 	--palette controls
 	poke(0x5f2e,1) --persist pal swap
@@ -14,7 +14,7 @@ function _init()
 
 	pal_swap_screen_segment()
 
-	timer = 0
+	frame = 0
 	x_scroll = 16
 	can_scroll_back = false
 
@@ -79,18 +79,7 @@ function _init()
 	-- music(0,0,9)
 
 	--text
-	text_box={
-		x1=40,
-		y1=92,
-		x2=122,
-		y2=120,
-		sfx=0,
-		text=nil,
-		buffer="The quick brown fox jumped over the lazy dog. It was remarkable, I'm so glad I was able to see it.",--\rMOAR",
-		start=nil,
-		flushed=false,
-		paginated=false
-	}
+	tb = init_text_box()
 end
 
 function add_houses(n)
@@ -118,13 +107,18 @@ function _update()
 	kate_scale = min(max(((y_pos-4)/32)^2, 0.4), 2) --literal magic
 
 	--input
+	x_pressed = btn(5)
 	if should_point then
 		upd_point()
+		moving = false
+	elseif tb.is_active then
+		if btnp(5) then --x
+			cycle_text_box(tb)
+		end
 		moving = false
 	else
 		speed_scale = min(((y_pos)/56)^2, 1) --literal magic (56?)	
 		moving = btn() & 0x0f > 0
-
 		if btn(0) then
 			if y_pos > 39 and x_pos < 12 and x_scroll % 128 > 10 then
 				x_scroll-=0.5
@@ -149,13 +143,12 @@ function _update()
 			y_pos+=(1*speed_scale)
 			facing_cam = true
 		end
+		if btnp(4) then --z
+			queue_text_box(tb, "The quick brown fox jumped over the lazy dog. It was remarkable, I'm so glad I was able to see it.")
+			cycle_text_box(tb)
+		end
 	end
-	if btn(5) then
-		pressed = true
-		upd_text_box(text_box)
-	end
-	pressed = btn(5) --x; z is 4
-
+	
 	--cycles houses
 	if x_scroll % 128 == 0 and should_cycle_once then
 		for i=0,2 do
@@ -167,14 +160,9 @@ function _update()
 		should_cycle_once = true
 	end
 
-	timer += 1
+	frame += 1
 end
 
-function upd_text_box(tb)
-	if tb.start != nil and tb.flushed then
-		tb.start = nil
-	end
-end
 
 -->8
 --DRAW
@@ -195,8 +183,8 @@ function draw_ui()
 	--controls
 	slide=1
 	ovalfill(justify(1,9,slide),124,justify(1,3,slide),127,5)
-	print('★',justify(7,3,slide),122+tonum(pressed),5)
-	print('❎',justify(7,3,slide),122+tonum(pressed),7)
+	print('★',justify(7,3,slide),122+tonum(x_pressed),5)
+	print('❎',justify(7,3,slide),122+tonum(x_pressed),7)
 
 	slide=abs(slide-1)
 
@@ -217,10 +205,9 @@ function _draw()
 	palt(0, false)
 	palt(14, true)
 	draw_ui()
-	draw_text_box(text_box, 100)
-	
-	-- print(x_pos, y_pos)
-	-- print(x_scroll % 128)
+	if tb.is_active then
+		drw_text_box(tb, 100)
+	end
 	
 	--sidewalk
 	for i=0,4 do
@@ -239,17 +226,18 @@ function _draw()
 	end
 	
 	--kate
-	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * (flr(timer / 5) % 4), 0, 8, 16, x_pos, y_pos, 8 * kate_scale, 16 * kate_scale)
+	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * (flr(frame / 5) % 4), 0, 8, 16, x_pos, y_pos, 8 * kate_scale, 16 * kate_scale)
 	--comp
 	pal(12,comp_hair)
 	pal(1,comp_dress)
-	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * abs((flr(timer / 5) % 4)-3), 0, 8, 16, x_pos + 5 * kate_scale, y_pos, 8 * kate_scale, 16 * kate_scale)
+	sspr(40 + 40 * tonum(facing_cam) + 8 * tonum(moving) * abs((flr(frame / 5) % 4)-3), 0, 8, 16, x_pos + 5 * kate_scale, y_pos, 8 * kate_scale, 16 * kate_scale)
 	pal(12,12)
 	pal(1,1)
 
 	palt()
+
 	if should_point then
-		draw_point(2, 14)
+		drw_point(2, 14)
 	end
 end
 
@@ -294,83 +282,6 @@ end
 
 -->8
 --HELPERS
-function draw_text_box(tb, speed)
-	if tb.start == nil then
-		tb.start = time()
-		tb.flushed = false
-		tb.text = nil
-		tb.paginated = false
-	end
-	if tb.text == nil then
-		local screens = split(tb.buffer,'\r')
-		tb.text = screens[1]
-		tb.buffer=sub(tb.buffer,#tb.text+2) --one to move to next screen, two for \r
-	end
-	
-	--add linebreaks
-	local text = split(tb.text,"")
-	local x=tb.x1
-	local y=tb.y1
-	local last_space=nil
-	
-	for i=1,#text do
-		if text[i]==" " then
-			last_space=i
-		end
-		
-		if x >= tb.x2 then
-			if last_space == nil then
-				add(text,'\n',i)
-			else
-				text[last_space]='\n'
-			end
-			x=tb.x1+((i-last_space)*4)
-			y+=6
-			
-			if y >= tb.y2 then
-				--? add ... and boot three chars to buffer
-				tb.buffer=sub(tb.text,-(#text-last_space))..(tb.buffer!="" and '\r'..tb.buffer or "")
-				tb.text=sub(tb.text,1,-(#text-last_space+1))
-				tb.paginated=true
-				break
-			end
-
-			last_space=nil
-		else
-			x+=4
-		end
-		
-	end
-			
-	-- print
-	y=tb.y1
-	x=tb.x1
-	for i, letter in pairs(text) do
-		if i >= (time() - tb.start) * speed then
-			return
-		end
-		if letter=='\n'then
-			y+=6
-			x=tb.x1
-		else
-			print(letter,x,y,7)
-			x+=4
-		end
-	end
-	if tb.paginated then
-		print('...',tb.x1,y+6)
-	end
-
-	--clear the text
-	tb.flushed=true
-end
-
-function join(t,delim)
-	str = ''
-	for v in all(t) do
-		str=str..v..delim
-	end
-end
 
 function tan(x) return sin(x) / cos(x) end
 
@@ -410,30 +321,6 @@ function pal_swap_screen_segment()
 	memset(0x5f7b,0xff,7)
 end
 
-function upd_point()
-	if (btn(0)) then
-		point_x-=1
-	end
-	if (btn(1)) then
-		point_x+=1
-	end
-	if (btn(2)) then
-		point_y-=1
-	end
-	if (btn(3)) then
-		point_y+=1
-	end
-end
-
-function draw_point(cursor_col, point_col)
-	prev = color(cursor_col)
-	line(point_x-2,point_y,point_x+2,point_y)
-	line(point_x,point_y+2,point_x,point_y-2)
-	print(point_x, 1, 1)
-	print(point_y, 1, 7)
-	pset(point_x, point_y,point_col)
-	color(prev)
-end
 
 -->8
 --JUNK
